@@ -16,6 +16,7 @@ const JWT_SECRET =
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Express session setup (safe for serverless testing)
 app.use(
   session({
     name: "secureid.sid",
@@ -31,7 +32,7 @@ app.use(
   })
 );
 
-// Simple demo stores (In-memory, resets on serverless cold starts)
+// Simple demo stores (In-memory)
 const users = new Map();
 const challenges = new Map();
 const loginFailures = new Map();
@@ -439,11 +440,12 @@ app.post("/api/login", async (req, res) => {
 
     const challenge = createChallenge(user.id, "email", "login");
 
-    req.session.pendingMfaUserId = user.id;
-    req.session.pendingChallengeId = challenge.challengeId;
-
-    if (rememberMe) {
-      req.session.rememberMe = true;
+    if (req.session) {
+      req.session.pendingMfaUserId = user.id;
+      req.session.pendingChallengeId = challenge.challengeId;
+      if (rememberMe) {
+        req.session.rememberMe = true;
+      }
     }
 
     res.json({
@@ -461,9 +463,9 @@ app.post("/api/login", async (req, res) => {
 
 app.post("/api/verify-login-otp", (req, res) => {
   const { challengeId, otp } = req.body;
-  const userId = req.session.pendingMfaUserId;
+  const userId = req.session ? req.session.pendingMfaUserId : null;
 
-  if (!userId || req.session.pendingChallengeId !== challengeId) {
+  if (!userId || (req.session && req.session.pendingChallengeId !== challengeId)) {
     return res.status(401).json({
       success: false,
       message: "Login MFA session is invalid. Please log in again."
@@ -484,7 +486,7 @@ app.post("/api/verify-login-otp", (req, res) => {
   if (hashOtp(otp) !== result.challenge.otpHash) {
     if (result.challenge.attempts >= MAX_OTP_ATTEMPTS) {
       challenges.delete(challengeId);
-      req.session.destroy(() => {});
+      if (req.session) req.session.destroy(() => {});
       return res.status(429).json({
         success: false,
         locked: true,
@@ -502,37 +504,29 @@ app.post("/api/verify-login-otp", (req, res) => {
   result.challenge.used = true;
   challenges.delete(challengeId);
 
-  req.session.userId = userId;
-  delete req.session.pendingMfaUserId;
-  delete req.session.pendingChallengeId;
+  if (req.session) {
+    req.session.userId = userId;
+    delete req.session.pendingMfaUserId;
+    delete req.session.pendingChallengeId;
 
-  if (req.session.rememberMe) {
-    req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30;
+    if (req.session.rememberMe) {
+      req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30;
+    }
   }
 
   const user = [...users.values()].find((u) => u.id === userId);
 
-  req.session.save((error) => {
-    if (error) {
-      console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: "Could not create authenticated session."
-      });
-    }
-
-    res.json({
-      success: true,
-      message: "Login successful.",
-      user: safeUser(user)
-    });
+  res.json({
+    success: true,
+    message: "Login successful.",
+    user: safeUser(user)
   });
 });
 
 // ---------- Session authentication ----------
 
 function requireSession(req, res, next) {
-  if (!req.session.userId) {
+  if (!req.session || !req.session.userId) {
     return res.status(401).json({
       success: false,
       authenticated: false,
@@ -563,24 +557,19 @@ app.get("/api/me", requireSession, (req, res) => {
 });
 
 app.post("/api/logout", (req, res) => {
-  req.session.destroy((error) => {
-    if (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Logout failed."
-      });
-    }
+  if (req.session) {
+    req.session.destroy(() => {});
+  }
 
-    res.clearCookie("secureid.sid", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax"
-    });
+  res.clearCookie("secureid.sid", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax"
+  });
 
-    res.json({
-      success: true,
-      message: "Logged out successfully."
-    });
+  res.json({
+    success: true,
+    message: "Logged out successfully."
   });
 });
 
@@ -655,15 +644,6 @@ app.get("/api/protected", requireJwt, (req, res) => {
     message: "JWT validated. You can access this protected API.",
     claims: req.jwtPayload
   });
-});
-
-// ---------- Static frontend ----------
-
-app.use(express.static(path.join(__dirname, "..", "public")));
-
-// Standard Express catch-all for single-page routing
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 
 if (require.main === module) {
