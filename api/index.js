@@ -31,8 +31,7 @@ app.use(
   })
 );
 
-// Simple demo stores.
-// For production, replace these Maps with a persistent database.
+// Simple demo stores (In-memory, resets on serverless cold starts)
 const users = new Map();
 const challenges = new Map();
 const loginFailures = new Map();
@@ -662,8 +661,9 @@ app.get("/api/protected", requireJwt, (req, res) => {
 
 app.use(express.static(path.join(__dirname, "..", "public")));
 
-app.get('/{*splat}', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
+// Standard Express catch-all for single-page routing
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 
 if (require.main === module) {
