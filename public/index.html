@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SecureID — Login</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="navbar">
+    <a class="brand" href="/">Secure<span>ID</span></a>
+    <nav>
+      <a href="/register.html">Create account</a>
+    </nav>
+  </header>
+
+  <main class="auth-shell">
+    <section class="auth-card" id="loginCard">
+      <div class="eyebrow">IDENTITY & ACCESS MANAGEMENT</div>
+      <h1>Welcome back</h1>
+      <p class="subtitle">Sign in securely using your credentials and MFA.</p>
+
+      <div id="alert" class="alert hidden" role="alert"></div>
+
+      <form id="loginForm" novalidate>
+        <label for="email">Email / username</label>
+        <input id="email" name="email" type="email" autocomplete="username" placeholder="student@example.com" required />
+
+        <label for="password">Password</label>
+        <div class="password-wrap">
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
+          <button type="button" class="password-toggle" id="togglePassword">Show</button>
+        </div>
+
+        <div class="form-row">
+          <label class="remember">
+            <input type="checkbox" id="rememberMe" />
+            <span>Remember me</span>
+          </label>
+          <button type="button" class="link-button" id="forgotPassword">Forgot password?</button>
+        </div>
+
+        <button class="primary-btn" type="submit" id="loginButton">Login</button>
+      </form>
+
+      <p class="bottom-text">Don't have an account? <a href="/register.html">Create account</a></p>
+    </section>
+
+    <section class="auth-card hidden" id="otpCard">
+      <button class="back-button" id="backToLogin">← Back to login</button>
+      <div class="otp-icon">✦</div>
+      <div class="eyebrow">MULTI-FACTOR AUTHENTICATION</div>
+      <h1>Verify your identity</h1>
+      <p class="subtitle">We sent a 6-digit verification code to your registered email.</p>
+
+      <div id="otpAlert" class="alert hidden" role="alert"></div>
+
+      <form id="otpForm" novalidate>
+        <label for="otp">Verification code</label>
+        <input id="otp" class="otp-input" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" required />
+        <p class="hint">The simulated OTP is printed in your Node.js server console.</p>
+        <button class="primary-btn" type="submit" id="verifyButton">Verify & continue</button>
+      </form>
+
+      <button class="secondary-btn" id="resendOtp">Resend OTP</button>
+    </section>
+  </main>
+
+  <footer>SecureID IAM Demo · Authentication decisions are handled by the backend.</footer>
+  <script src="/script.js"></script>
+</body>
+</html>

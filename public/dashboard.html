@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SecureID — Dashboard</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="navbar">
+    <a class="brand" href="/">Secure<span>ID</span></a>
+    <button class="logout-btn" id="logoutButton">Logout</button>
+  </header>
+
+  <main class="dashboard">
+    <section class="welcome-card">
+      <div class="eyebrow">AUTHENTICATED APPLICATION</div>
+      <h1>Welcome, <span id="userName">User</span>!</h1>
+      <p>Your login was completed with MFA and a server-side session.</p>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="info-card">
+        <span class="card-label">ACCOUNT</span>
+        <h2 id="userEmail">—</h2>
+        <p id="userPhone">—</p>
+      </article>
+
+      <article class="info-card">
+        <span class="card-label">SECURITY</span>
+        <h2>MFA Enabled</h2>
+        <p>✓ Email verification<br />✓ SMS verification</p>
+      </article>
+
+      <article class="info-card">
+        <span class="card-label">AUTHENTICATION</span>
+        <h2>Session</h2>
+        <p>HttpOnly cookie<br />Server-side session</p>
+      </article>
+
+      <article class="info-card">
+        <span class="card-label">API</span>
+        <h2>Protected</h2>
+        <p id="apiStatus">Checking...</p>
+      </article>
+    </section>
+
+    <div id="dashboardAlert" class="alert hidden"></div>
+  </main>
+
+  <footer>SecureID IAM Demo · Protected dashboard</footer>
+  <script src="/script.js"></script>
+</body>
+</html>
